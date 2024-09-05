@@ -1,9 +1,22 @@
 use crate::optimism::fast_lz::flz_compress_len;
 use crate::primitives::{address, db::Database, Address, SpecId, U256};
 use core::ops::Mul;
+use once_cell::sync::Lazy;
 
 const ZERO_BYTE_COST: u64 = 4;
-const NON_ZERO_BYTE_COST: u64 = 16;
+/// const NON_ZERO_BYTE_COST: u64 = 16; <------------ Original
+/// WeaveVM intends to decrease this cost
+/// to 8 gas
+/// ENV=NON_ZERO_BYTE_COST_ORIGINAL can be set to false so it loads 16 gas
+pub static NON_ZERO_BYTE_COST: Lazy<u64> = Lazy::new(|| {
+    let original = std::env::var("NON_ZERO_BYTE_COST_ORIGINAL").unwrap_or_else(|_| "false".to_string());
+
+    if original == "true" {
+        16
+    } else {
+        8
+    }
+});
 
 /// The two 4-byte Ecotone fee scalar values are packed into the same storage slot as the 8-byte sequence number.
 /// Byte offset within the storage slot of the 4-byte baseFeeScalar attribute.
@@ -101,7 +114,7 @@ impl L1BlockInfo {
             // only necessary if `empty_scalars` is true, as it was deprecated in Ecotone.
             let empty_scalars = l1_blob_base_fee.is_zero()
                 && l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
-                    == EMPTY_SCALARS;
+                == EMPTY_SCALARS;
             let l1_fee_overhead = empty_scalars
                 .then(|| db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT))
                 .transpose()?;
@@ -117,8 +130,9 @@ impl L1BlockInfo {
         }
     }
 
-    /// Calculate the data gas for posting the transaction on L1. Calldata costs 16 gas per byte
+    /// Calculate the data gas for posting the transaction on L1. Calldata costs 8 gas per byte
     /// after compression.
+    /// (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
     ///
     /// Prior to fjord, calldata costs 16 gas per non-zero byte and 4 gas per zero byte.
     ///
@@ -129,7 +143,7 @@ impl L1BlockInfo {
             let estimated_size = self.tx_estimated_size_fjord(input);
 
             return estimated_size
-                .saturating_mul(U256::from(NON_ZERO_BYTE_COST))
+                .saturating_mul(U256::from(*NON_ZERO_BYTE_COST))
                 .wrapping_div(U256::from(1_000_000));
         };
 
@@ -137,13 +151,13 @@ impl L1BlockInfo {
             acc + if *byte == 0x00 {
                 ZERO_BYTE_COST
             } else {
-                NON_ZERO_BYTE_COST
+                *NON_ZERO_BYTE_COST
             }
         }));
 
         // Prior to regolith, an extra 68 non zero bytes were included in the rollup data costs.
         if !spec_id.is_enabled_in(SpecId::REGOLITH) {
-            rollup_data_gas_cost += U256::from(NON_ZERO_BYTE_COST).mul(U256::from(68));
+            rollup_data_gas_cost += U256::from(*NON_ZERO_BYTE_COST).mul(U256::from(68));
         }
 
         rollup_data_gas_cost
@@ -210,7 +224,7 @@ impl L1BlockInfo {
 
         l1_fee_scaled
             .saturating_mul(rollup_data_gas_cost)
-            .wrapping_div(U256::from(1_000_000 * NON_ZERO_BYTE_COST))
+            .wrapping_div(U256::from(1_000_000 * (*NON_ZERO_BYTE_COST)))
     }
 
     /// Calculate the gas cost of a transaction based on L1 block data posted on L2, post-Fjord.
@@ -230,7 +244,7 @@ impl L1BlockInfo {
     fn calculate_l1_fee_scaled_ecotone(&self) -> U256 {
         let calldata_cost_per_byte = self
             .l1_base_fee
-            .saturating_mul(U256::from(NON_ZERO_BYTE_COST))
+            .saturating_mul(U256::from(*NON_ZERO_BYTE_COST))
             .saturating_mul(self.l1_base_fee_scalar);
         let blob_cost_per_byte = self
             .l1_blob_base_fee
@@ -244,7 +258,7 @@ impl L1BlockInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::bytes;
+    use crate::primitives::{bytes, hex};
 
     #[test]
     fn test_data_gas_non_zero_bytes() {
@@ -260,20 +274,23 @@ mod tests {
 
         // Pre-regolith (ie bedrock) has an extra 68 non-zero bytes
         // gas cost = 3 non-zero bytes * NON_ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
-        // gas cost = 3 * 16 + 68 * 16 = 1136
+        // gas cost = 3 * 8 + 68 * 8 = 1136
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let input = bytes!("FACADE");
         let bedrock_data_gas = l1_block_info.data_gas(&input, SpecId::BEDROCK);
-        assert_eq!(bedrock_data_gas, U256::from(1136));
+        assert_eq!(bedrock_data_gas, U256::from(568));
 
         // Regolith has no added 68 non zero bytes
-        // gas cost = 3 * 16 = 48
+        // gas cost = 3 * 8 = 48
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let regolith_data_gas = l1_block_info.data_gas(&input, SpecId::REGOLITH);
-        assert_eq!(regolith_data_gas, U256::from(48));
+        assert_eq!(regolith_data_gas, U256::from(24));
 
         // Fjord has a minimum compressed size of 100 bytes
-        // gas cost = 100 * 16 = 1600
+        // gas cost = 100 * 8 = 1600
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let fjord_data_gas = l1_block_info.data_gas(&input, SpecId::FJORD);
-        assert_eq!(fjord_data_gas, U256::from(1600));
+        assert_eq!(fjord_data_gas, U256::from(800));
     }
 
     #[test]
@@ -290,20 +307,23 @@ mod tests {
 
         // Pre-regolith (ie bedrock) has an extra 68 non-zero bytes
         // gas cost = 3 non-zero * NON_ZERO_BYTE_COST + 2 * ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
-        // gas cost = 3 * 16 + 2 * 4 + 68 * 16 = 1144
+        // gas cost = 3 * 8 + 2 * 4 + 68 * 8 = 1144
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let input = bytes!("FA00CA00DE");
         let bedrock_data_gas = l1_block_info.data_gas(&input, SpecId::BEDROCK);
-        assert_eq!(bedrock_data_gas, U256::from(1144));
+        assert_eq!(bedrock_data_gas, U256::from(576));
 
         // Regolith has no added 68 non zero bytes
-        // gas cost = 3 * 16 + 2 * 4 = 56
+        // gas cost = 3 * 8 + 2 * 4 = 56
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let regolith_data_gas = l1_block_info.data_gas(&input, SpecId::REGOLITH);
-        assert_eq!(regolith_data_gas, U256::from(56));
+        assert_eq!(regolith_data_gas, U256::from(32));
 
         // Fjord has a minimum compressed size of 100 bytes
-        // gas cost = 100 * 16 = 1600
+        // gas cost = 100 * 8 = 1600
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let fjord_data_gas = l1_block_info.data_gas(&input, SpecId::FJORD);
-        assert_eq!(fjord_data_gas, U256::from(1600));
+        assert_eq!(fjord_data_gas, U256::from(800));
     }
 
     #[test]
@@ -317,7 +337,7 @@ mod tests {
 
         let input = bytes!("FACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::REGOLITH);
-        assert_eq!(gas_cost, U256::from(1048));
+        assert_eq!(gas_cost, U256::from(1024));
 
         // Zero rollup data gas cost should result in zero
         let input = bytes!("");
@@ -346,7 +366,7 @@ mod tests {
         // = 51
         let input = bytes!("FACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
-        assert_eq!(gas_cost, U256::from(51));
+        assert_eq!(gas_cost, U256::from(27));
 
         // Zero rollup data gas cost should result in zero
         let input = bytes!("");
@@ -362,7 +382,7 @@ mod tests {
         l1_block_info.empty_scalars = true;
         let input = bytes!("FACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
-        assert_eq!(gas_cost, U256::from(1048));
+        assert_eq!(gas_cost, U256::from(1024));
     }
 
     #[test]
@@ -387,7 +407,7 @@ mod tests {
         //        = 100e6 * 17 / 1e6
         //        = 1700
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::FJORD);
-        assert_eq!(gas_cost, U256::from(1700));
+        assert_eq!(gas_cost, U256::from(900));
 
         // fastLzSize = 202
         // estimatedSize = max(minTransactionSize, intercept + fastlzCoef*fastlzSize)
@@ -398,7 +418,7 @@ mod tests {
         //        = 126387400 * 17 / 1e6
         //        = 2148
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::FJORD);
-        assert_eq!(gas_cost, U256::from(2148));
+        assert_eq!(gas_cost, U256::from(1137));
 
         // Zero rollup data gas cost should result in zero
         let input = bytes!("");
@@ -409,5 +429,41 @@ mod tests {
         let input = bytes!("7FFACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::FJORD);
         assert_eq!(gas_cost, U256::ZERO);
+    }
+
+    #[test]
+    fn calculate_tx_l1_cost_fjord() {
+        // rig
+
+        // L1 block info for OP mainnet fjord block 124665056
+        // <https://optimistic.etherscan.io/block/124665056>
+        let l1_block_info = L1BlockInfo {
+            l1_base_fee: U256::from(1055991687),
+            l1_base_fee_scalar: U256::from(5227),
+            l1_blob_base_fee_scalar: Some(U256::from(1014213)),
+            l1_blob_base_fee: Some(U256::from(1)),
+            ..Default::default() // l1 fee overhead (l1 gas used) deprecated since Fjord
+        };
+
+        // second tx in OP mainnet Fjord block 124665056
+        // <https://optimistic.etherscan.io/tx/0x1059e8004daff32caa1f1b1ef97fe3a07a8cf40508f5b835b66d9420d87c4a4a>
+        const TX: &[u8] = &hex!("02f904940a8303fba78401d6d2798401db2b6d830493e0943e6f4f7866654c18f536170780344aa8772950b680b904246a761202000000000000000000000000087000a300de7200382b55d40045000000e5d60e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003a0000000000000000000000000000000000000000000000000000000000000022482ad56cb0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000120000000000000000000000000dc6ff44d5d932cbd77b52e5612ba0529dc6226f1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000044095ea7b300000000000000000000000021c4928109acb0659a88ae5329b5374a3024694c0000000000000000000000000000000000000000000000049b9ca9a6943400000000000000000000000000000000000000000000000000000000000000000000000000000000000021c4928109acb0659a88ae5329b5374a3024694c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000024b6b55f250000000000000000000000000000000000000000000000049b9ca9a694340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000415ec214a3950bea839a7e6fbb0ba1540ac2076acd50820e2d5ef83d0902cdffb24a47aff7de5190290769c4f0a9c6fabf63012986a0d590b1b571547a8c7050ea1b00000000000000000000000000000000000000000000000000000000000000c080a06db770e6e25a617fe9652f0958bd9bd6e49281a53036906386ed39ec48eadf63a07f47cf51a4a40b4494cf26efc686709a9b03939e20ee27e59682f5faa536667e");
+
+        // l1 gas used for tx and l1 fee for tx, from OP mainnet block scanner
+        // https://optimistic.etherscan.io/tx/0x1059e8004daff32caa1f1b1ef97fe3a07a8cf40508f5b835b66d9420d87c4a4a
+        let expected_data_gas = U256::from(2235);
+        let expected_l1_fee = U256::from_be_bytes(hex!(
+            "00000000000000000000000000000000000000000000000000000002DF8D5AAC"
+        ));
+
+        // test
+
+        let data_gas = l1_block_info.data_gas(TX, SpecId::FJORD);
+
+        assert_eq!(data_gas, expected_data_gas);
+
+        let l1_fee = l1_block_info.calculate_tx_l1_cost_fjord(TX);
+
+        assert_eq!(l1_fee, expected_l1_fee)
     }
 }
