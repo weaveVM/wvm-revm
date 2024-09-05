@@ -4,9 +4,10 @@ use core::ops::Mul;
 use ethers_contract::Lazy;
 
 const ZERO_BYTE_COST: u64 = 4;
-// const NON_ZERO_BYTE_COST: u64 = 16; <------------ Original
+/// const NON_ZERO_BYTE_COST: u64 = 16; <------------ Original
 /// WeaveVM intends to decrease this cost
-/// to 8b
+/// to 8 gas
+/// ENV=NON_ZERO_BYTE_COST_ORIGINAL can be set to false so it loads 16 gas
 pub static NON_ZERO_BYTE_COST: Lazy<u64> = Lazy::new(|| {
     let original = std::env::var("NON_ZERO_BYTE_COST_ORIGINAL").unwrap_or_else(|_| "false".to_string());
 
@@ -129,8 +130,9 @@ impl L1BlockInfo {
         }
     }
 
-    /// Calculate the data gas for posting the transaction on L1. Calldata costs 16 gas per byte
+    /// Calculate the data gas for posting the transaction on L1. Calldata costs 8 gas per byte
     /// after compression.
+    /// (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
     ///
     /// Prior to fjord, calldata costs 16 gas per non-zero byte and 4 gas per zero byte.
     ///
@@ -272,18 +274,21 @@ mod tests {
 
         // Pre-regolith (ie bedrock) has an extra 68 non-zero bytes
         // gas cost = 3 non-zero bytes * NON_ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
-        // gas cost = 3 * 16 + 68 * 16 = 1136
+        // gas cost = 3 * 8 + 68 * 8 = 1136
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let input = bytes!("FACADE");
         let bedrock_data_gas = l1_block_info.data_gas(&input, SpecId::BEDROCK);
         assert_eq!(bedrock_data_gas, U256::from(568));
 
         // Regolith has no added 68 non zero bytes
-        // gas cost = 3 * 16 = 48
+        // gas cost = 3 * 8 = 48
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let regolith_data_gas = l1_block_info.data_gas(&input, SpecId::REGOLITH);
         assert_eq!(regolith_data_gas, U256::from(24));
 
         // Fjord has a minimum compressed size of 100 bytes
-        // gas cost = 100 * 16 = 1600
+        // gas cost = 100 * 8 = 1600
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let fjord_data_gas = l1_block_info.data_gas(&input, SpecId::FJORD);
         assert_eq!(fjord_data_gas, U256::from(800));
     }
@@ -302,18 +307,21 @@ mod tests {
 
         // Pre-regolith (ie bedrock) has an extra 68 non-zero bytes
         // gas cost = 3 non-zero * NON_ZERO_BYTE_COST + 2 * ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
-        // gas cost = 3 * 16 + 2 * 4 + 68 * 16 = 1144
+        // gas cost = 3 * 8 + 2 * 4 + 68 * 8 = 1144
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let input = bytes!("FA00CA00DE");
         let bedrock_data_gas = l1_block_info.data_gas(&input, SpecId::BEDROCK);
         assert_eq!(bedrock_data_gas, U256::from(576));
 
         // Regolith has no added 68 non zero bytes
-        // gas cost = 3 * 16 + 2 * 4 = 56
+        // gas cost = 3 * 8 + 2 * 4 = 56
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let regolith_data_gas = l1_block_info.data_gas(&input, SpecId::REGOLITH);
         assert_eq!(regolith_data_gas, U256::from(32));
 
         // Fjord has a minimum compressed size of 100 bytes
-        // gas cost = 100 * 16 = 1600
+        // gas cost = 100 * 8 = 1600
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let fjord_data_gas = l1_block_info.data_gas(&input, SpecId::FJORD);
         assert_eq!(fjord_data_gas, U256::from(800));
     }
