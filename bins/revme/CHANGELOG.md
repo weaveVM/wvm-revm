@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0](https://github.com/weaveVM/wvm-revm/compare/revme-v0.10.1...revme-v0.11.0) - 2024-09-06
+
+### Added
+- *(statetest)* enable EOF in Prague tests ([#1753](https://github.com/weaveVM/wvm-revm/pull/1753))
+
 ## [0.10.1](https://github.com/bluealloy/revm/compare/revme-v0.10.0...revme-v0.10.1) - 2024-08-30
 
 ### Other
