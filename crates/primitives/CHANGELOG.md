@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.1](https://github.com/weaveVM/wvm-revm/compare/revm-primitives-v8.0.0...revm-primitives-v8.0.1) - 2024-09-06
+
+### Other
+- update Cargo.toml dependencies
+
 ## [8.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v7.1.0...revm-primitives-v8.0.0) - 2024-08-08
 
 ### Added
