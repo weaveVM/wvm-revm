@@ -1,15 +1,40 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v45 tag
+date: 26.09.2024
+
+Maintainance release.
+
+* `revme`: 0.10.2 -> 0.10.3 (✓ API compatible changes)
+* `revm`: 14.0.2 -> 14.0.3 (✓ API compatible changes)
+* `revm-primitives`: 9.0.2 -> 10.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 10.0.2 -> 10.0.3
+* `revm-precompile`: 11.0.2 -> 11.0.3
+
+# v44 tag
+date: 18.09.2024
+
+Small maintenance release.
+Code can be found in release/v44 branch.
+Fixes bug with Inspector selfdestruct not called every time, and enabled PRAGUE_EOF in statetest for PRAGUE tests.
+
+* `revme`: 0.10.1 -> 0.10.2
+* `revm`: 14.0.1 -> 14.0.2
+* `revm-interpreter`: 10.0.1 -> 10.0.2
+* `revm-primitives`: 9.0.1 -> 9.0.2
+* `revm-precompile`: 11.0.1 -> 11.0.2
+* `revm-test`: 0.1.0
+
 # v43 tag
 date: 30.08.2024
 
 Logo change and doc fix.
 
-* revm: 14.0.0 -> 14.0.1
-* revm-interpreter: 10.0.0 -> 10.0.1
-* revm-primitives: 9.0.0 -> 9.0.1
-* revm-precompile: 11.0.0 -> 11.0.1
-* revme: 0.10.0 -> 0.10.1
+* `revm`: 14.0.0 -> 14.0.1
+* `revm-interpreter`: 10.0.0 -> 10.0.1
+* `revm-primitives`: 9.0.0 -> 9.0.1
+* `revm-precompile`: 11.0.0 -> 11.0.1
+* `revme`: 0.10.0 -> 0.10.1
 
 # v42 tag
 date: 29.08.2024
@@ -17,11 +42,11 @@ date: 29.08.2024
 new EIP-7702 implemented. Passing all EOF and EIP-7702 tests.
 Preparation for devnet-3.
 
-* revme: 0.9.0 -> 0.10.0
-* revm: 13.0.0 -> 14.0.0
-* revm-interpreter: 9.0.0 -> 10.0.0
-* revm-primitives: 8.0.0 -> 9.0.0
-* revm-precompile: 10.0.0 -> 11.0.0
+* `revme`: 0.9.0 -> 0.10.0
+* `revm`: 13.0.0 -> 14.0.0
+* `revm-interpreter`: 9.0.0 -> 10.0.0
+* `revm-primitives`: 8.0.0 -> 9.0.0
+* `revm-precompile`: 10.0.0 -> 11.0.0
 
 # v41 tag
 date: 08.08.2024
