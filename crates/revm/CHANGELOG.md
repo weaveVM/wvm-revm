@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.1.0](https://github.com/weaveVM/wvm-revm/compare/revm-v14.0.3...revm-v14.1.0) - 2024-10-10
+
+### Added
+
+- small refactor, fix check fails
+- send base fee back to treasury
+- L1block
+
+### Other
+
+- Merge tag 'v45' into merge-upstream-v45-14-0-3
+- fmt
+- merge with upstream
+
 ## [14.0.3](https://github.com/bluealloy/revm/compare/revm-v14.0.2...revm-v14.0.3) - 2024-09-26
 
 ### Other
