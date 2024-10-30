@@ -7,6 +7,8 @@ use crate::{
     AccountLoad, Eip7702CodeLoad, SStoreResult, SelfDestructResult, StateLoad,
 };
 
+pub static WVM_TX_COST: u64 = 500_000u64;
+
 /// `const` Option `?`.
 macro_rules! tri {
     ($e:expr) => {
@@ -397,10 +399,10 @@ pub fn validate_initial_tx_gas(
             // EIP-2: Homestead Hard-fork Changes
             53000
         } else {
-            21000
+            WVM_TX_COST
         }
     } else {
-        21000
+        WVM_TX_COST
     };
 
     // EIP-3860: Limit and meter initcode
