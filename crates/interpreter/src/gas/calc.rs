@@ -7,7 +7,7 @@ use crate::{
     AccountLoad, Eip7702CodeLoad, SStoreResult, SelfDestructResult, StateLoad,
 };
 
-pub static WVM_INITIAL_GAS: u64 = 500_000u64;
+pub static WVM_BASE_FEE: u64 = 500_000u64;
 
 /// `const` Option `?`.
 macro_rules! tri {
@@ -399,10 +399,10 @@ pub fn validate_initial_tx_gas(
             // EIP-2: Homestead Hard-fork Changes
             53000
         } else {
-            WVM_INITIAL_GAS
+            WVM_BASE_FEE
         }
     } else {
-        WVM_INITIAL_GAS
+        WVM_BASE_FEE
     };
 
     // EIP-3860: Limit and meter initcode
