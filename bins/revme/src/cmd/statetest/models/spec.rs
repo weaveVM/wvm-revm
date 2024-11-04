@@ -26,6 +26,7 @@ pub enum SpecName {
     Cancun,
     Prague,
     Osaka, // SKIPPED
+    WvmAlphanetV3,
     #[serde(other)]
     Unknown,
 }
@@ -53,6 +54,7 @@ impl SpecName {
             }
             Self::Osaka => panic!("Osaka is not implemented"),
             Self::Unknown => panic!("Unknown spec"),
+            Self::WvmAlphanetV3 => SpecId::WVM_ALPHANET_V3,
         }
     }
 }

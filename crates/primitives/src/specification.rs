@@ -32,6 +32,8 @@ pub enum SpecId {
     PRAGUE_EOF = 19,      // Prague+EOF             TBD
     #[default]
     LATEST = u8::MAX,
+
+    WVM_ALPHANET_V3 = 33, // WVM Alphanet upgrades
 }
 
 /// Specification IDs and their activation block.
@@ -112,6 +114,7 @@ impl From<&str> for SpecId {
             "Cancun" => Self::CANCUN,
             "Prague" => Self::PRAGUE,
             "PragueEOF" => Self::PRAGUE_EOF,
+            "WvmAlphanetV3" => Self::WVM_ALPHANET_V3,
             #[cfg(feature = "optimism")]
             "Bedrock" => SpecId::BEDROCK,
             #[cfg(feature = "optimism")]
@@ -154,6 +157,7 @@ impl From<SpecId> for &'static str {
             SpecId::CANCUN => "Cancun",
             SpecId::PRAGUE => "Prague",
             SpecId::PRAGUE_EOF => "PragueEOF",
+            SpecId::WVM_ALPHANET_V3 => "WvmAlphanetV3",
             #[cfg(feature = "optimism")]
             SpecId::BEDROCK => "Bedrock",
             #[cfg(feature = "optimism")]
@@ -215,6 +219,7 @@ spec!(SHANGHAI, ShanghaiSpec);
 spec!(CANCUN, CancunSpec);
 spec!(PRAGUE, PragueSpec);
 spec!(PRAGUE_EOF, PragueEofSpec);
+spec!(WVM_ALPHANET_V3, WvmAlphanetV3Spec);
 
 spec!(LATEST, LatestSpec);
 
@@ -299,6 +304,10 @@ macro_rules! spec_to_generic {
             }
             $crate::SpecId::PRAGUE_EOF => {
                 use $crate::PragueEofSpec as SPEC;
+                $e
+            }
+            $crate::SpecId::WVM_ALPHANET_V3 => {
+                use $crate::WvmAlphanetV3Spec as SPEC;
                 $e
             }
         }
@@ -447,6 +456,7 @@ mod tests {
         spec_to_generic!(PRAGUE, assert_eq!(SPEC::SPEC_ID, PRAGUE));
         spec_to_generic!(PRAGUE_EOF, assert_eq!(SPEC::SPEC_ID, PRAGUE_EOF));
         spec_to_generic!(LATEST, assert_eq!(SPEC::SPEC_ID, LATEST));
+        spec_to_generic!(WVM_ALPHANET_V3, assert_eq!(SPEC::SPEC_ID, WVM_ALPHANET_V3));
     }
 }
 

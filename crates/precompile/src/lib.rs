@@ -63,6 +63,7 @@ impl Precompiles {
             PrecompileSpecId::CANCUN => Self::cancun(),
             PrecompileSpecId::PRAGUE => Self::prague(),
             PrecompileSpecId::LATEST => Self::latest(),
+            PrecompileSpecId::WvmAlphanetV3 => Self::wvm_alphanet_v3(),
         }
     }
 
@@ -179,6 +180,11 @@ impl Precompiles {
         })
     }
 
+    /// Returns precompiles for WvmAlphanetV3
+    pub fn wvm_alphanet_v3() -> &'static Self {
+        Self::prague()
+    }
+
     /// Returns the precompiles for the latest spec.
     pub fn latest() -> &'static Self {
         Self::prague()
@@ -278,6 +284,7 @@ pub enum PrecompileSpecId {
     CANCUN,
     PRAGUE,
     LATEST,
+    WvmAlphanetV3,
 }
 
 impl PrecompileSpecId {
@@ -294,6 +301,7 @@ impl PrecompileSpecId {
             CANCUN => Self::CANCUN,
             PRAGUE | PRAGUE_EOF => Self::PRAGUE,
             LATEST => Self::LATEST,
+            WVM_ALPHANET_V3 => Self::WvmAlphanetV3,
             #[cfg(feature = "optimism")]
             BEDROCK | REGOLITH | CANYON => Self::BERLIN,
             #[cfg(feature = "optimism")]
