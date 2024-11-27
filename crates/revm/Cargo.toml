@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm"]
 license = "MIT"
 name = "revm"
 repository = "https://github.com/bluealloy/revm"
-version = "14.0.3"
+version = "17.0.0"
 readme = "../../README.md"
 
 [package.metadata.docs.rs]
@@ -24,8 +24,8 @@ all = "warn"
 [dependencies]
 once_cell = "1.19.0"
 # revm
-revm-interpreter = { path = "../interpreter", version = "10.0.3", default-features = false }
-revm-precompile = { path = "../precompile", version = "11.0.3", default-features = false }
+revm-interpreter = { path = "../interpreter", version = "13.0.0", default-features = false }
+revm-precompile = { path = "../precompile", version = "14.0.0", default-features = false }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
@@ -51,7 +51,7 @@ ethers-core = { version = "2.0", optional = true }
 
 # alloydb
 alloy-provider = { version = "0.3", optional = true, default-features = false }
-alloy-eips = { version = "0.3", optional = true, default-features = false }
+alloy-eips = { version = "0.3.1", optional = true, default-features = false }
 alloy-transport = { version = "0.3", optional = true, default-features = false }
 
 [dev-dependencies]
