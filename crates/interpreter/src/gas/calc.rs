@@ -1,11 +1,11 @@
-use revm_primitives::{Address, eip7702};
-use wvm::{BUNDLER_ADDRESSES, NON_ZERO_BYTE_COST, WVM_NON_ZERO_BYTE_GAS_FOR_BUNDLE};
 use super::constants::*;
 use crate::{
     num_words,
     primitives::{AccessListItem, SpecId, U256},
     AccountLoad, Eip7702CodeLoad, SStoreResult, SelfDestructResult, StateLoad,
 };
+use revm_primitives::{eip7702, Address};
+use wvm::{BUNDLER_ADDRESSES, NON_ZERO_BYTE_COST, WVM_NON_ZERO_BYTE_GAS_FOR_BUNDLE};
 
 pub static WVM_TX_COST: u64 = 500_000u64;
 

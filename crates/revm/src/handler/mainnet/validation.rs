@@ -55,7 +55,7 @@ pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
         is_create,
         access_list,
         authorization_list_num,
-        env.tx.transact_to.to()
+        env.tx.transact_to.to(),
     );
 
     // Additional check to see if limit is big enough to cover initial gas.
