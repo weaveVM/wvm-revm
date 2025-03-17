@@ -1,5 +1,5 @@
-use revm_primitives::eip7702;
-
+use revm_primitives::{Address, eip7702};
+use wvm::{BUNDLER_ADDRESSES, NON_ZERO_BYTE_COST, WVM_NON_ZERO_BYTE_GAS_FOR_BUNDLE};
 use super::constants::*;
 use crate::{
     num_words,
@@ -363,6 +363,25 @@ pub const fn memory_gas(num_words: u64) -> u64 {
         .saturating_add(num_words.saturating_mul(num_words) / 512)
 }
 
+pub fn is_bundler_addr(target: &Address) -> bool {
+    let target_str = target.to_string();
+    let bundlers = &*BUNDLER_ADDRESSES;
+    bundlers.verify_target(target_str)
+}
+
+pub fn get_real_gas_cost_wvm(target: Option<&Address>) -> u64 {
+    let gas_per_non_zero = *NON_ZERO_BYTE_COST;
+    if let Some(target) = target {
+        if is_bundler_addr(target) {
+            return WVM_NON_ZERO_BYTE_GAS_FOR_BUNDLE;
+        } else {
+            gas_per_non_zero
+        }
+    } else {
+        gas_per_non_zero
+    }
+}
+
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
 pub fn validate_initial_tx_gas(
@@ -371,20 +390,18 @@ pub fn validate_initial_tx_gas(
     is_create: bool,
     access_list: &[AccessListItem],
     authorization_list_num: u64,
+    target: Option<&Address>,
 ) -> u64 {
     let mut initial_gas = 0;
     let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
     let non_zero_data_len = input.len() as u64 - zero_data_len;
 
+    let gas_per_non_zero = get_real_gas_cost_wvm(target);
+
     // initdate stipend
     initial_gas += zero_data_len * TRANSACTION_ZERO_DATA;
     // EIP-2028: Transaction data gas cost reduction
-    initial_gas += non_zero_data_len
-        * if spec_id.is_enabled_in(SpecId::ISTANBUL) {
-            16
-        } else {
-            68
-        };
+    initial_gas += non_zero_data_len * gas_per_non_zero;
 
     // get number of access list account and storages.
     if spec_id.is_enabled_in(SpecId::BERLIN) {

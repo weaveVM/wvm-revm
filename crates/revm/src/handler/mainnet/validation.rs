@@ -55,6 +55,7 @@ pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
         is_create,
         access_list,
         authorization_list_num,
+        env.tx.transact_to.to()
     );
 
     // Additional check to see if limit is big enough to cover initial gas.
@@ -62,4 +63,22 @@ pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
         return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
     }
     Ok(initial_gas_spend)
+}
+
+#[cfg(test)]
+mod test {
+    use crate::primitives::address;
+    use revm_interpreter::gas::is_bundler_addr;
+    use wvm::BUNDLER_ADDRESSES;
+
+    #[test]
+    pub fn test_verify_bundlr_target() {
+        let babe1 = is_bundler_addr(&address!("babe1d25501157043c7b4ea7CBC877B9B4D8A057"));
+        let babe2 = is_bundler_addr(&address!("babe2dCAf248F2F1214dF2a471D77bC849a2Ce84"));
+        let not_babe = is_bundler_addr(&address!("A6dC883ea2A6acb576A933B4d38D13d6069d9fBE"));
+
+        assert!(babe1);
+        assert!(babe2);
+        assert!(!not_babe);
+    }
 }
