@@ -6,6 +6,90 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [17.0.0-alpha.5](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.4...revm-precompile-v17.0.0-alpha.5) - 2025-03-12
+
+### Other
+
+- updated the following local packages: revm-context-interface
+
+## [17.0.0-alpha.4](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.3...revm-precompile-v17.0.0-alpha.4) - 2025-03-11
+
+### Fixed
+
+- correct propagate features ([#2177](https://github.com/bluealloy/revm/pull/2177))
+
+### Other
+
+- *(precompile)* refactor out msm helper ([#2179](https://github.com/bluealloy/revm/pull/2179))
+
+## [17.0.0-alpha.3](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.2...revm-precompile-v17.0.0-alpha.3) - 2025-03-10
+
+### Fixed
+
+- *(precompiles)* add portable flag for bls ([#2174](https://github.com/bluealloy/revm/pull/2174))
+
+### Other
+
+- v59 release-plz update ([#2170](https://github.com/bluealloy/revm/pull/2170))
+
+## [17.0.0-alpha.2](https://github.com/bluealloy/revm/compare/revm-precompile-v17.0.0-alpha.1...revm-precompile-v17.0.0-alpha.2) - 2025-03-10
+
+### Added
+
+- remove specification crate ([#2165](https://github.com/bluealloy/revm/pull/2165))
+
+### Fixed
+
+- *(blst)* Fix blst wrong constants values and usage ([#2102](https://github.com/bluealloy/revm/pull/2102))
+
+### Other
+
+- simplify bn128::run_pair ([#2137](https://github.com/bluealloy/revm/pull/2137))
+- export eip2930 eip7702 types from one place ([#2097](https://github.com/bluealloy/revm/pull/2097))
+- PrecompileErrors to PrecompileError ([#2103](https://github.com/bluealloy/revm/pull/2103))
+- Update broken link secp256r1.rs ([#2099](https://github.com/bluealloy/revm/pull/2099))
+- G1_msm base gas fee const correction ([#2100](https://github.com/bluealloy/revm/pull/2100))
+- Split blst constants out to individual file #2085
+- *(deps)* bump breaking deps ([#2093](https://github.com/bluealloy/revm/pull/2093))
+- move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
+
+## [17.0.0-alpha.1](https://github.com/bluealloy/revm/compare/revm-precompile-v16.1.0...revm-precompile-v17.0.0-alpha.1) - 2025-02-16
+
+### Added
+
+- *(eip7702)* apply latest EIP-7702 changes, backport from v52 (#1969)
+- integrate codspeed (#1935)
+- Restucturing Part7 Handler and Context rework (#1865)
+- restructuring Part6 transaction crate (#1814)
+- restructure Part2 database crate (#1784)
+- project restructuring Part1 (#1776)
+- introducing EvmWiring, a chain-specific configuration (#1672)
+
+### Fixed
+
+- *(Inspector)* frame_end called multiple times (#2037)
+
+### Other
+
+- backport op l1 fetch perf (#2076)
+- Bump licence year to 2025 (#2058)
+- bump kzg.rs (#2002)
+- align crates versions (#1983)
+- blst reprice, remove g1/g2 mul (#1981)
+- integrate rust-secp256k1 (#1915)
+- fix comments and docs into more sensible (#1920)
+- Rename PRAGUE_EOF to OSAKA (#1903)
+- *(precompile)* use secp256k1 global context for ecrecover (#1843)
+- fix some typos (#1800)
+- Replace `PrecompileError` variant ([#1797](https://github.com/bluealloy/revm/pull/1797))
+- *(deps)* bump once_cell from 1.19.0 to 1.20.0 (#1773)
+
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ## [16.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v16.0.0...revm-precompile-v16.1.0) - 2025-02-11
 
 ### Other

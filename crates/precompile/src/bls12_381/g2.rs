@@ -1,12 +1,8 @@
-use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding, FP_LENGTH, PADDED_FP_LENGTH};
-use crate::primitives::{Bytes, PrecompileError};
+use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding};
+use crate::bls12_381_const::{FP_LENGTH, G2_INPUT_ITEM_LENGTH, G2_OUTPUT_LENGTH, PADDED_FP_LENGTH};
+use crate::PrecompileError;
 use blst::{blst_fp2, blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_on_curve};
-
-/// Length of each of the elements in a g2 operation input.
-pub(super) const G2_INPUT_ITEM_LENGTH: usize = 256;
-
-/// Output length of a g2 operation.
-const G2_OUTPUT_LENGTH: usize = 256;
+use primitives::Bytes;
 
 /// Encodes a G2 point in affine format into byte slice with padded elements.
 pub(super) fn encode_g2_point(input: &blst_p2_affine) -> Bytes {
@@ -56,7 +52,7 @@ pub(super) fn check_canonical_fp2(
 
 /// Extracts a G2 point in Affine format from a 256 byte slice representation.
 ///
-/// NOTE: This function will perform a G2 subgroup check if `subgroup_check` is set to `true`.
+/// **Note**: This function will perform a G2 subgroup check if `subgroup_check` is set to `true`.
 pub(super) fn extract_g2_input(
     input: &[u8],
     subgroup_check: bool,
@@ -103,7 +99,7 @@ pub(super) fn extract_g2_input(
         // We use blst_p2_affine_on_curve instead of blst_p2_affine_in_g2 because the latter performs
         // the subgroup check.
         //
-        // SAFETY: out is a blst value.
+        // SAFETY: Out is a blst value.
         if unsafe { !blst_p2_affine_on_curve(&out) } {
             return Err(PrecompileError::Other(
                 "Element not on G2 curve".to_string(),

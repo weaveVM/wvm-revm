@@ -1,17 +1,13 @@
-use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding, PADDED_FP_LENGTH};
-use crate::primitives::{Bytes, PrecompileError};
+use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding};
+use crate::bls12_381_const::{G1_INPUT_ITEM_LENGTH, G1_OUTPUT_LENGTH, PADDED_FP_LENGTH};
+use crate::PrecompileError;
 use blst::{blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve};
-
-/// Length of each of the elements in a g1 operation input.
-pub(super) const G1_INPUT_ITEM_LENGTH: usize = 128;
-
-/// Output length of a g1 operation.
-const G1_OUTPUT_LENGTH: usize = 128;
+use primitives::Bytes;
 
 /// Encodes a G1 point in affine format into byte slice with padded elements.
 pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> Bytes {
     let mut out = vec![0u8; G1_OUTPUT_LENGTH];
-    // SAFETY: out comes from fixed length array, input is a blst value.
+    // SAFETY: Out comes from fixed length array, input is a blst value.
     unsafe {
         fp_to_bytes(&mut out[..PADDED_FP_LENGTH], &(*input).x);
         fp_to_bytes(&mut out[PADDED_FP_LENGTH..], &(*input).y);
@@ -39,7 +35,7 @@ pub(super) fn decode_and_check_g1(
 
 /// Extracts a G1 point in Affine format from a 128 byte slice representation.
 ///
-/// NOTE: This function will perform a G1 subgroup check if `subgroup_check` is set to `true`.
+/// **Note**: This function will perform a G1 subgroup check if `subgroup_check` is set to `true`.
 pub(super) fn extract_g1_input(
     input: &[u8],
     subgroup_check: bool,
@@ -83,7 +79,7 @@ pub(super) fn extract_g1_input(
         // We use blst_p1_affine_on_curve instead of blst_p1_affine_in_g1 because the latter performs
         // the subgroup check.
         //
-        // SAFETY: out is a blst value.
+        // SAFETY: Out is a blst value.
         if unsafe { !blst_p1_affine_on_curve(&out) } {
             return Err(PrecompileError::Other(
                 "Element not on G1 curve".to_string(),
