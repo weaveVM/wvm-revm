@@ -1,15 +1,6 @@
-pub mod authorization_list;
-pub mod bytecode;
+//! EIP-7702 constants
 
-pub use authorization_list::{
-    Authorization, AuthorizationList, RecoveredAuthority, RecoveredAuthorization, Signature,
-    SignedAuthorization,
-};
-pub use bytecode::{
-    Eip7702Bytecode, Eip7702DecodeError, EIP7702_MAGIC, EIP7702_MAGIC_BYTES, EIP7702_VERSION,
-};
-
-// Base cost of updating authorized account.
+/// Base cost of updating authorized account.
 pub const PER_AUTH_BASE_COST: u64 = 12500;
 
 /// Cost of creating authorized account that was previously empty.

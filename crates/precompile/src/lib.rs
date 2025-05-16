@@ -11,10 +11,12 @@ extern crate alloc as std;
 pub mod blake2;
 #[cfg(feature = "blst")]
 pub mod bls12_381;
+pub mod bls12_381_const;
+pub mod bls12_381_utils;
 pub mod bn128;
-pub mod fatal_precompile;
 pub mod hash;
 pub mod identity;
+pub mod interface;
 #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg_point_evaluation;
 pub mod modexp;
@@ -23,32 +25,26 @@ pub mod secp256k1;
 pub mod secp256r1;
 pub mod utilities;
 
-pub use fatal_precompile::fatal_precompile;
-
+pub use interface::*;
 #[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 // silence kzg-rs lint as c-kzg will be used as default if both are enabled.
 use kzg_rs as _;
-pub use primitives::{
-    precompile::{PrecompileError as Error, *},
-    Address, Bytes, HashMap, HashSet, Log, B256,
-};
-#[doc(hidden)]
-pub use revm_primitives as primitives;
 
 use cfg_if::cfg_if;
 use core::hash::Hash;
 use once_cell::race::OnceBox;
+use primitives::{hardfork::SpecId, Address, HashMap, HashSet};
 use std::{boxed::Box, vec::Vec};
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
-    (len as u64 + 32 - 1) / 32 * word + base
+    (len as u64).div_ceil(32) * word + base
 }
 
 #[derive(Clone, Default, Debug)]
 pub struct Precompiles {
-    /// Precompiles.
-    inner: HashMap<Address, Precompile>,
-    /// Addresses of precompile.
+    /// Precompiles
+    inner: HashMap<Address, PrecompileFn>,
+    /// Addresses of precompile
     addresses: HashSet<Address>,
 }
 
@@ -82,7 +78,7 @@ impl Precompiles {
     }
 
     /// Returns inner HashMap of precompiles.
-    pub fn inner(&self) -> &HashMap<Address, Precompile> {
+    pub fn inner(&self) -> &HashMap<Address, PrecompileFn> {
         &self.inner
     }
 
@@ -148,10 +144,10 @@ impl Precompiles {
                 if #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))] {
                     let precompile = kzg_point_evaluation::POINT_EVALUATION.clone();
                 } else {
-                    // TODO move constants to separate file.
-                    let precompile = fatal_precompile(u64_to_address(0x0A), "c-kzg feature is not enabled".into());
+                    let precompile = PrecompileWithAddress(u64_to_address(0x0A), |_,_| Err(PrecompileError::Fatal("c-kzg feature is not enabled".into())));
                 }
             }
+
 
             precompiles.extend([
                 precompile,
@@ -204,13 +200,13 @@ impl Precompiles {
 
     /// Returns the precompile for the given address.
     #[inline]
-    pub fn get(&self, address: &Address) -> Option<&Precompile> {
+    pub fn get(&self, address: &Address) -> Option<&PrecompileFn> {
         self.inner.get(address)
     }
 
     /// Returns the precompile for the given address.
     #[inline]
-    pub fn get_mut(&mut self, address: &Address) -> Option<&mut Precompile> {
+    pub fn get_mut(&mut self, address: &Address) -> Option<&mut PrecompileFn> {
         self.inner.get_mut(address)
     }
 
@@ -234,22 +230,22 @@ impl Precompiles {
     /// Other precompiles with overwrite existing precompiles.
     #[inline]
     pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
-        let items = other.into_iter().collect::<Vec<_>>();
+        let items: Vec<PrecompileWithAddress> = other.into_iter().collect::<Vec<_>>();
         self.addresses.extend(items.iter().map(|p| *p.address()));
-        self.inner.extend(items.into_iter().map(Into::into));
+        self.inner.extend(items.into_iter().map(|p| (p.0, p.1)));
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct PrecompileWithAddress(pub Address, pub Precompile);
+pub struct PrecompileWithAddress(pub Address, pub PrecompileFn);
 
-impl From<(Address, Precompile)> for PrecompileWithAddress {
-    fn from(value: (Address, Precompile)) -> Self {
+impl From<(Address, PrecompileFn)> for PrecompileWithAddress {
+    fn from(value: (Address, PrecompileFn)) -> Self {
         PrecompileWithAddress(value.0, value.1)
     }
 }
 
-impl From<PrecompileWithAddress> for (Address, Precompile) {
+impl From<PrecompileWithAddress> for (Address, PrecompileFn) {
     fn from(value: PrecompileWithAddress) -> Self {
         (value.0, value.1)
     }
@@ -264,7 +260,7 @@ impl PrecompileWithAddress {
 
     /// Returns reference of precompile.
     #[inline]
-    pub fn precompile(&self) -> &Precompile {
+    pub fn precompile(&self) -> &PrecompileFn {
         &self.1
     }
 }
@@ -280,10 +276,16 @@ pub enum PrecompileSpecId {
     LATEST,
 }
 
+impl From<SpecId> for PrecompileSpecId {
+    fn from(spec_id: SpecId) -> Self {
+        Self::from_spec_id(spec_id)
+    }
+}
+
 impl PrecompileSpecId {
-    /// Returns the appropriate precompile Spec for the primitive [SpecId](revm_primitives::SpecId)
-    pub const fn from_spec_id(spec_id: revm_primitives::SpecId) -> Self {
-        use revm_primitives::SpecId::*;
+    /// Returns the appropriate precompile Spec for the primitive [SpecId].
+    pub const fn from_spec_id(spec_id: primitives::hardfork::SpecId) -> Self {
+        use primitives::hardfork::SpecId::*;
         match spec_id {
             FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
                 Self::HOMESTEAD
@@ -294,18 +296,15 @@ impl PrecompileSpecId {
             CANCUN => Self::CANCUN,
             PRAGUE | OSAKA => Self::PRAGUE,
             LATEST => Self::LATEST,
-            #[cfg(feature = "optimism")]
-            BEDROCK | REGOLITH | CANYON => Self::BERLIN,
-            #[cfg(feature = "optimism")]
-            ECOTONE | FJORD | GRANITE | HOLOCENE => Self::CANCUN,
         }
     }
 }
 
 /// Const function for making an address by concatenating the bytes from two given numbers.
 ///
-/// Note that 32 + 128 = 160 = 20 bytes (the length of an address). This function is used
-/// as a convenience for specifying the addresses of the various precompiles.
+/// Note that 32 + 128 = 160 = 20 bytes (the length of an address).
+///
+/// This function is used as a convenience for specifying the addresses of the various precompiles.
 #[inline]
 pub const fn u64_to_address(x: u64) -> Address {
     let x = x.to_be_bytes();
