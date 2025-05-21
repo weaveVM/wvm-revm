@@ -1,7 +1,7 @@
 use super::constants::*;
 use crate::{num_words, tri, SStoreResult, SelfDestructResult, StateLoad};
 use context_interface::journaled_state::AccountLoad;
-use primitives::{eip7702, hardfork::SpecId, U256};
+use primitives::{eip7702, hardfork::SpecId, Address, U256};
 
 pub static WVM_TX_COST: u64 = 500_000u64;
 
@@ -379,6 +379,7 @@ pub struct InitialAndFloorGas {
 
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
+/// LOAD NETWORK: SPECIAL BILLING OF CALLDATA WHICH IS SENT TO THE SPECIAL 0XBABE ADDRESS
 ///
 /// # Returns
 ///
@@ -391,11 +392,18 @@ pub fn calculate_initial_tx_gas(
     access_list_accounts: u64,
     access_list_storages: u64,
     authorization_list_num: u64,
+    // LOAD: add an address to do a check against it
+    // 0xBabe protocol billing of calldata
+    to: Option<Address>,
 ) -> InitialAndFloorGas {
     let mut gas = InitialAndFloorGas::default();
 
     // Initdate stipend
     let tokens_in_calldata = get_tokens_in_calldata(input, spec_id.is_enabled_in(SpecId::ISTANBUL));
+
+    // TODO: do special fee calculation based on provided to address
+    // create a special address based on some kind of a hash
+    // "0xBabe_protocol_special_address_on_load_network"
     gas.initial_gas += tokens_in_calldata * STANDARD_TOKEN_COST;
 
     // Get number of access list account and storages.
@@ -448,5 +456,5 @@ pub fn get_tokens_in_calldata(input: &[u8], is_istanbul: bool) -> u64 {
 /// Calculate the transaction cost floor as specified in EIP-7623.
 #[inline]
 pub fn calc_tx_floor_cost(tokens_in_calldata: u64) -> u64 {
-    tokens_in_calldata * TOTAL_COST_FLOOR_PER_TOKEN + 21_000
+    tokens_in_calldata * TOTAL_COST_FLOOR_PER_TOKEN + WVM_TX_COST // LOAD: change it to 500_000
 }

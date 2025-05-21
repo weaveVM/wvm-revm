@@ -8,7 +8,7 @@ use context_interface::{
 };
 use core::cmp::{self, Ordering};
 use interpreter::gas::{self, InitialAndFloorGas};
-use primitives::{eip4844, hardfork::SpecId, B256, U256};
+use primitives::{eip4844, hardfork::SpecId, TxKind, B256, U256};
 use state::AccountInfo;
 use std::boxed::Box;
 
@@ -301,6 +301,13 @@ pub fn validate_initial_tx_gas(
         .map(|al| al.access_list_nums())
         .unwrap_or_default();
 
+    // LOAD: we extract the tx.to() address if it's a CALL tx type and as a next step we pass it to
+    // the calculate_initial_tx_gas()
+    let tx_to = match tx.kind() {
+        TxKind::Call(to) => Some(to),
+        TxKind::Create => None,
+    };
+
     let gas = gas::calculate_initial_tx_gas(
         spec,
         tx.input(),
@@ -308,6 +315,8 @@ pub fn validate_initial_tx_gas(
         accounts as u64,
         storages as u64,
         tx.authorization_list_len() as u64,
+        // LOAD: we pass tx.to() to check against the special 0xBabe protocol address
+        tx_to,
     );
 
     // Additional check to see if limit is big enough to cover initial gas.
