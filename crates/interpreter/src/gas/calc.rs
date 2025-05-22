@@ -401,9 +401,14 @@ pub fn calculate_initial_tx_gas(
     // Initdate stipend
     let tokens_in_calldata = get_tokens_in_calldata(input, spec_id.is_enabled_in(SpecId::ISTANBUL));
 
-    // TODO: do special fee calculation based on provided to address
-    // create a special address based on some kind of a hash
-    // "0xBabe_protocol_special_address_on_load_network"
+    // LOAD_NETWORK: 0xBabe do special fee calculation based on provided to address
+    gas.initial_gas += match to {
+        Some(addr) if addr == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS => {
+            tokens_in_calldata * primitives::load_0xbabe::LOAD_0XBABE_CALLDATA_TOKEN_COST
+        }
+        _ => tokens_in_calldata * STANDARD_TOKEN_COST,
+    };
+
     gas.initial_gas += tokens_in_calldata * STANDARD_TOKEN_COST;
 
     // Get number of access list account and storages.
