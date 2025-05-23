@@ -409,8 +409,6 @@ pub fn calculate_initial_tx_gas(
         _ => tokens_in_calldata * STANDARD_TOKEN_COST,
     };
 
-    gas.initial_gas += tokens_in_calldata * STANDARD_TOKEN_COST;
-
     // Get number of access list account and storages.
     gas.initial_gas += access_list_accounts * ACCESS_LIST_ADDRESS;
     gas.initial_gas += access_list_storages * ACCESS_LIST_STORAGE_KEY;

@@ -338,6 +338,11 @@ where
             }
         };
 
+        // LOAD: this address is reserved for 0xbabe transactions
+        if created_address == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS {
+            return return_error(InstructionResult::Return);
+        }
+
         // warm load account.
         context.journal().load_account(created_address)?;
 
