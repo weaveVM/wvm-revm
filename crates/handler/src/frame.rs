@@ -338,8 +338,11 @@ where
             }
         };
 
-        // LOAD: this address is reserved for 0xbabe transactions
-        if created_address == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS {
+        // LOAD: these addresses are reserved for 0xbabe transactions
+        if (created_address == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1)
+            || (created_address
+                == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2)
+        {
             return return_error(InstructionResult::Return);
         }
 

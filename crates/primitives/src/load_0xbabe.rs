@@ -1,14 +1,16 @@
-/// `LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS` was generated using this code:
-///
+/// `LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1` and `LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2`
+/// was generated using this code:
 /// ```rust
 /// use alloy::hex;
+///
 /// use alloy_primitives::Address;
 /// use sha3::{Digest, Keccak256};
 ///
-/// const PHRASE: &str = "LoadNetwork0xBabeSpecialProtocolAddress";
+/// const PHRASE_0XBABE1: &str = "LoadNetwork0xBabeSpecialProtocolAddress0xBabe1";
+/// const PHRASE_0XBABE2: &str = "LoadNetwork0xBabeSpecialProtocolAddress0xBabe2";
 ///
-/// fn manual_special_address() -> Address {
-///     let hash = Keccak256::digest(PHRASE.as_bytes());
+/// fn manual_special_address(phrase: &str) -> Address {
+///     let hash = Keccak256::digest(phrase.as_bytes());
 ///     let addr = Address::from_slice(&hash[12..]);
 ///     print!("Address::new([");
 ///     for (i, byte) in addr.iter().enumerate() {
@@ -21,56 +23,60 @@
 ///     addr
 /// }
 ///
-/// fn alloy_special_address() -> Address {
-///     let hash = alloy_primitives::keccak256(PHRASE.as_bytes());
-///     Address::from_word(hash)
-/// }
-///
 /// fn main() {
-///     let a1 = manual_special_address();
-///     let a2 = alloy_special_address();
+///     let a1 = manual_special_address(PHRASE_0XBABE1);
+///     let a2 = manual_special_address(PHRASE_0XBABE2);
 ///
-///     println!("manual_special_address:   0x{}", hex::encode(a1));
-///     println!("alloy_special_address:    0x{}", hex::encode(a2));
-/// }
-///
-/// #[cfg(test)]
-/// mod tests {
-///     use super::*;
-///
-///     #[test]
-///     fn both_methods_match() {
-///         let a1 = manual_special_address();
-///         let a2 = alloy_special_address();
-///         assert_eq!(a1, a2, "Addresses do not match!");
-///     }
+///     println!("manual_special_address 0xbabe1:   0x{}", hex::encode(a1));
+///     println!("manual_special_address 0xbabe2:   0x{}", hex::encode(a2));
 /// }
 /// ```
 ///
-/// Resulting address: `0x0df59bf80fe3559c00e78933107a2867b648e466`
+/// Resulting address 0xBabe1: `0x727e365e80e0770b1328ff6ec9d5685bf61d5b74`
+/// Resulting address 0xBabe1: `0x976ffe04ddf4761df7eb0019a8edb6da0e190965`
 use alloy_primitives::Address;
 
-pub const LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS: Address = Address::new([
-    0x0d, 0xf5, 0x9b, 0xf8, 0x0f, 0xe3, 0x55, 0x9c, 0x00, 0xe7, 0x89, 0x33, 0x10, 0x7a, 0x28, 0x67,
-    0xb6, 0x48, 0xe4, 0x66,
+pub const LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1: Address = Address::new([
+    0x72, 0x7e, 0x36, 0x5e, 0x80, 0xe0, 0x77, 0x0b, 0x13, 0x28, 0xff, 0x6e, 0xc9, 0xd5, 0x68, 0x5b,
+    0xf6, 0x1d, 0x5b, 0x74,
+]);
+
+pub const LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2: Address = Address::new([
+    0x97, 0x6f, 0xfe, 0x04, 0xdd, 0xf4, 0x76, 0x1d, 0xf7, 0xeb, 0x00, 0x19, 0xa8, 0xed, 0xb6, 0xda,
+    0x0e, 0x19, 0x09, 0x65,
 ]);
 
 pub const LOAD_0XBABE_CALLDATA_TOKEN_COST: u64 = 2;
 
 mod tests {
     use super::*;
-    const PHRASE: &str = "LoadNetwork0xBabeSpecialProtocolAddress";
+    const PHRASE_0XBABE1: &str = "LoadNetwork0xBabeSpecialProtocolAddress0xBabe1";
+    const PHRASE_0XBABE2: &str = "LoadNetwork0xBabeSpecialProtocolAddress0xBabe2";
 
-    fn alloy_special_address() -> Address {
-        let hash = alloy_primitives::keccak256(PHRASE.as_bytes());
+    fn alloy_special_address_0xbabe1() -> Address {
+        let hash = alloy_primitives::keccak256(PHRASE_0XBABE1.as_bytes());
+        Address::from_word(hash)
+    }
+
+    fn alloy_special_address_0xbabe2() -> Address {
+        let hash = alloy_primitives::keccak256(PHRASE_0XBABE2.as_bytes());
         Address::from_word(hash)
     }
 
     #[test]
-    fn both_methods_match() {
-        let test_address = alloy_special_address();
+    fn both_methods_match_0xbabe1() {
+        let test_address = alloy_special_address_0xbabe1();
         assert_eq!(
-            LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS, test_address,
+            LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1, test_address,
+            "Addresses do not match!"
+        );
+    }
+
+    #[test]
+    fn both_methods_match_0xbabe2() {
+        let test_address = alloy_special_address_0xbabe2();
+        assert_eq!(
+            LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2, test_address,
             "Addresses do not match!"
         );
     }

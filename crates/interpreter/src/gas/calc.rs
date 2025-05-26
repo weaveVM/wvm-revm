@@ -403,7 +403,11 @@ pub fn calculate_initial_tx_gas(
 
     // LOAD_NETWORK: 0xBabe do special fee calculation based on provided to address
     gas.initial_gas += match to {
-        Some(addr) if addr == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS => {
+        Some(addr)
+            if (addr == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1)
+                || (addr
+                    == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2) =>
+        {
             tokens_in_calldata * primitives::load_0xbabe::LOAD_0XBABE_CALLDATA_TOKEN_COST
         }
         _ => tokens_in_calldata * STANDARD_TOKEN_COST,
