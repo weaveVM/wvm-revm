@@ -468,6 +468,16 @@ where
 
         let created_address = created_address.unwrap_or_else(|| inputs.caller.create(old_nonce));
 
+        // LOAD_NETWORK: 0XBABE protocol
+        // these addresses are reserved for 0xbabe transactions
+        // which has special fee pricing on calldata
+        if (created_address == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1)
+            || (created_address
+                == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2)
+        {
+            return return_error(InstructionResult::Return);
+        }
+
         // Load account so it needs to be marked as warm for access list.
         context.journal().load_account(created_address)?;
 
