@@ -338,7 +338,9 @@ where
             }
         };
 
-        // LOAD: these addresses are reserved for 0xbabe transactions
+        // LOAD_NETWORK: 0XBABE protocol
+        // these addresses are reserved for 0xbabe transactions
+        // which has special fee pricing on calldata
         if (created_address == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1)
             || (created_address
                 == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2)

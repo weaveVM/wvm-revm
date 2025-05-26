@@ -49,6 +49,7 @@ pub fn reimburse_caller<CTX: ContextTr>(
     Ok(())
 }
 
+/// LOAD_NETWORK: we add base fee to the treasury instead of burning it
 pub fn reward_beneficiary<CTX: ContextTr>(
     context: &mut CTX,
     gas: &mut Gas,
@@ -79,25 +80,27 @@ pub fn reward_beneficiary<CTX: ContextTr>(
                 coinbase_gas_price * (gas.spent() - gas.refunded() as u64) as u128,
             ));
 
-    // WVM: if EIP-1559 enabled we send base fee back to treasury
+    // LOAD_NETWORK: if EIP-1559 enabled we send base fee back to treasury
     // instead of burning it
     if context.cfg().spec().into().is_enabled_in(SpecId::LONDON) {
-        wvm_add_base_fee_to_treasury(context)?;
+        load_network_add_base_fee_to_treasury(context)?;
     }
 
     Ok(())
 }
 
-/// WVM TREASURY
-const WVM_TREASURY_ADDRESS: Address = address!("a2A0D977847805fE224B789D8C4d3D711ab251e7");
+/// LOAD_NETWORK TREASURY
+const LOAD_NETWORK_TREASURY_ADDRESS: Address = address!("a2A0D977847805fE224B789D8C4d3D711ab251e7");
 
-/// WVM: send base fee back to treasury
+/// LOAD_NETWORK: send base fee back to treasury
 #[inline]
-fn wvm_add_base_fee_to_treasury<CTX: ContextTr>(
+fn load_network_add_base_fee_to_treasury<CTX: ContextTr>(
     context: &mut CTX,
 ) -> Result<(), <CTX::Db as Database>::Error> {
     let base_fee = context.block().basefee();
-    let treasury_account = context.journal().load_account(WVM_TREASURY_ADDRESS)?;
+    let treasury_account = context
+        .journal()
+        .load_account(LOAD_NETWORK_TREASURY_ADDRESS)?;
 
     treasury_account.data.mark_touch();
     treasury_account.data.info.balance = treasury_account

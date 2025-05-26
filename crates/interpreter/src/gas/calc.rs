@@ -392,8 +392,9 @@ pub fn calculate_initial_tx_gas(
     access_list_accounts: u64,
     access_list_storages: u64,
     authorization_list_num: u64,
-    // LOAD: add an address to do a check against it
-    // 0xBabe protocol billing of calldata
+    // LOAD_NETWORK: 0XBABE protocol, cheap calldata only txs
+    // add an address to do a check against it
+    // in 0xBabe protocol billing of calldata
     to: Option<Address>,
 ) -> InitialAndFloorGas {
     let mut gas = InitialAndFloorGas::default();
@@ -463,5 +464,6 @@ pub fn get_tokens_in_calldata(input: &[u8], is_istanbul: bool) -> u64 {
 /// Calculate the transaction cost floor as specified in EIP-7623.
 #[inline]
 pub fn calc_tx_floor_cost(tokens_in_calldata: u64) -> u64 {
-    tokens_in_calldata * TOTAL_COST_FLOOR_PER_TOKEN + WVM_TX_COST // LOAD: change it to 500_000
+    // LOAD_NETWORK: changed its own WVM_TX_COST
+    tokens_in_calldata * TOTAL_COST_FLOOR_PER_TOKEN + WVM_TX_COST
 }
