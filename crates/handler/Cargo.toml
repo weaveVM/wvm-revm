@@ -28,6 +28,7 @@ interpreter.workspace = true
 precompile.workspace = true
 context-interface.workspace = true
 context.workspace = true
+
 primitives.workspace = true
 state.workspace = true
 bytecode.workspace = true
@@ -46,6 +47,7 @@ alloy-provider.workspace = true
 alloy-signer.workspace = true
 alloy-signer-local.workspace = true
 alloy-primitives.workspace = true
+anyhow.workspace = true
 
 [features]
 default = ["std"]

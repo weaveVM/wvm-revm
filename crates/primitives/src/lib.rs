@@ -14,7 +14,6 @@ pub mod eip4844;
 pub mod eip7702;
 pub mod hardfork;
 pub mod load_0xbabe;
-
 pub use constants::*;
 
 // Reexport alloy primitives.
