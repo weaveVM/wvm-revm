@@ -301,7 +301,7 @@ pub fn validate_initial_tx_gas(
         .map(|al| al.access_list_nums())
         .unwrap_or_default();
 
-    // LOAD_NETWORK: 0XBABE protocol, cheap calldata only txs
+    // LOAD_NETWORK:0xBABE cheap calldata only txs
     // we extract the tx.to() address if it's a CALL tx type and as a next step we pass it to
     // the calculate_initial_tx_gas()
     let tx_to = match tx.kind() {
@@ -316,7 +316,7 @@ pub fn validate_initial_tx_gas(
         accounts as u64,
         storages as u64,
         tx.authorization_list_len() as u64,
-        // LOAD_NETWORK: 0XBABE protocol, cheap calldata only txs
+        // LOAD_NETWORK:0xBABE cheap calldata only txs
         // we pass tx.to() to check against the special 0xBabe protocol address
         // to handle fee
         tx_to,

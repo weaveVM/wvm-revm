@@ -392,7 +392,7 @@ pub fn calculate_initial_tx_gas(
     access_list_accounts: u64,
     access_list_storages: u64,
     authorization_list_num: u64,
-    // LOAD_NETWORK: 0XBABE protocol, cheap calldata only txs
+    // LOAD_NETWORK:0xBABE protocol, cheap calldata only txs
     // add an address to do a check against it
     // in 0xBabe protocol billing of calldata
     to: Option<Address>,
@@ -402,13 +402,9 @@ pub fn calculate_initial_tx_gas(
     // Initdate stipend
     let tokens_in_calldata = get_tokens_in_calldata(input, spec_id.is_enabled_in(SpecId::ISTANBUL));
 
-    // LOAD_NETWORK: 0xBabe do special fee calculation based on provided to address
+    // LOAD_NETWORK:0xBabe do special fee calculation based on provided to address
     gas.initial_gas += match to {
-        Some(addr)
-            if (addr == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1)
-                || (addr
-                    == primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2) =>
-        {
+        Some(addr) if primitives::load_0xbabe::is_reserved_address(addr) => {
             tokens_in_calldata * primitives::load_0xbabe::LOAD_0XBABE_CALLDATA_TOKEN_COST
         }
         _ => tokens_in_calldata * STANDARD_TOKEN_COST,
@@ -441,7 +437,13 @@ pub fn calculate_initial_tx_gas(
         gas.initial_gas += authorization_list_num * eip7702::PER_EMPTY_ACCOUNT_COST;
 
         // Calculate gas floor for EIP-7623
-        gas.floor_gas = calc_tx_floor_cost(tokens_in_calldata);
+        gas.floor_gas += match to {
+            Some(addr) if primitives::load_0xbabe::is_reserved_address(addr) => {
+                // LOAD_NETWORK:0xBABE not calculate gas_floor for EIP7623
+                0
+            }
+            _ => calc_tx_floor_cost(tokens_in_calldata),
+        }
     }
 
     gas
