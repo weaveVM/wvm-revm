@@ -862,7 +862,7 @@ pub fn return_eofcreate<JOURNAL: JournalTr>(
     journal.set_code(address, Bytecode::Eof(Arc::new(bytecode)));
 }
 
-/// LOAD_NETWORK:0xBabe tests for 0xBabe reserved addresses
+/// LOAD_NETWORK:0xBABE tests for 0xBabe reserved addresses
 /// To make sure that even if the address is bruteforced you
 /// can not create a contract on it
 #[cfg(test)]

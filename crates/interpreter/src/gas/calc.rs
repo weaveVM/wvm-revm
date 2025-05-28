@@ -402,7 +402,7 @@ pub fn calculate_initial_tx_gas(
     // Initdate stipend
     let tokens_in_calldata = get_tokens_in_calldata(input, spec_id.is_enabled_in(SpecId::ISTANBUL));
 
-    // LOAD_NETWORK:0xBabe do special fee calculation based on provided to address
+    // LOAD_NETWORK:0xBABE do special fee calculation based on provided to address
     gas.initial_gas += match to {
         Some(addr) if primitives::load_0xbabe::is_reserved_address(addr) => {
             tokens_in_calldata * primitives::load_0xbabe::LOAD_0XBABE_CALLDATA_TOKEN_COST
