@@ -125,31 +125,27 @@ mod tests {
     use super::test_helpers::with_test_reserved_addresses;
     use super::*;
 
-    const PHRASE_0XBABE1: &str = "LoadNetwork0xBabeSpecialProtocolAddress0xBabe1";
-    const PHRASE_0XBABE2: &str = "LoadNetwork0xBabeSpecialProtocolAddress0xBabe2";
-
-    fn alloy_special_address_0xbabe1() -> Address {
-        let hash = alloy_primitives::keccak256(PHRASE_0XBABE1.as_bytes());
-        Address::from_word(hash)
-    }
-
-    fn alloy_special_address_0xbabe2() -> Address {
-        let hash = alloy_primitives::keccak256(PHRASE_0XBABE2.as_bytes());
-        Address::from_word(hash)
-    }
-
     #[test]
     fn test_address_generation() {
-        let test_address = alloy_special_address_0xbabe1();
-        assert_eq!(
-            LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1, test_address,
-            "0xBabe1 addresses do not match!"
-        );
+        let expected1 = {
+            let mut b = [0u8; 20];
+            b[16..20].copy_from_slice(&[0x00, 0xBA, 0xBE, 0x01]);
+            Address::new(b)
+        };
 
-        let test_address = alloy_special_address_0xbabe2();
+        let expected2 = {
+            let mut b = [0u8; 20];
+            b[16..20].copy_from_slice(&[0x00, 0xBA, 0xBE, 0x02]);
+            Address::new(b)
+        };
+
         assert_eq!(
-            LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2, test_address,
-            "0xBabe2 addresses do not match!"
+            LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1, expected1,
+            "0xBabe1 address does not match expected suffix layout"
+        );
+        assert_eq!(
+            LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2, expected2,
+            "0xBabe2 address does not match expected suffix layout"
         );
     }
 
