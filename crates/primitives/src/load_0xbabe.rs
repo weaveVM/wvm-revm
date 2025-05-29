@@ -1,53 +1,45 @@
 #[cfg(not(feature = "std"))]
 use alloc::{vec, vec::Vec};
 /// `LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1` and `LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2`
-/// was generated using this code:
+/// were generated using the following code:
+///
 /// ```rust
 /// use alloy::hex;
-///
 /// use alloy_primitives::Address;
-/// use sha3::{Digest, Keccak256};
 ///
-/// const PHRASE_0XBABE1: &str = "LoadNetwork0xBabeSpecialProtocolAddress0xBabe1";
-/// const PHRASE_0XBABE2: &str = "LoadNetwork0xBabeSpecialProtocolAddress0xBabe2";
-///
-/// fn manual_special_address(phrase: &str) -> Address {
-///     let hash = Keccak256::digest(phrase.as_bytes());
-///     let addr = Address::from_slice(&hash[12..]);
-///     print!("Address::new([");
-///     for (i, byte) in addr.iter().enumerate() {
-///         print!("0x{:02x}", byte);
-///         if i != 19 {
-///             print!(", ");
-///         }
-///     }
-///     println!("]);");
-///     addr
+/// /// Pads a short suffix like `0xBABE0001` into a full 20-byte Ethereum address
+/// fn vanity_address_from_suffix(suffix: [u8; 4]) -> Address {
+///     let mut full = [0u8; 20];
+///     full[16..20].copy_from_slice(&suffix);
+///     Address::new(full)
 /// }
 ///
 /// fn main() {
-///     let a1 = manual_special_address(PHRASE_0XBABE1);
-///     let a2 = manual_special_address(PHRASE_0XBABE2);
+///     let a1 = vanity_address_from_suffix([0x00, 0xBA, 0xBE, 0x01]);
+///     let a2 = vanity_address_from_suffix([0x00, 0xBA, 0xBE, 0x02]);
 ///
-///     println!("manual_special_address 0xbabe1:   0x{}", hex::encode(a1));
-///     println!("manual_special_address 0xbabe2:   0x{}", hex::encode(a2));
+///     println!("Address 0xBABE0001: 0x{}", hex::encode(a1));
+///     println!("Address 0xBABE0002: 0x{}", hex::encode(a2));
 /// }
 /// ```
 ///
-/// Resulting address 0xBabe1: `0x727e365e80e0770b1328ff6ec9d5685bf61d5b74`
-/// Resulting address 0xBabe1: `0x976ffe04ddf4761df7eb0019a8edb6da0e190965`
+/// Resulting addresses:
+/// - `0xBABE0001` → `0x0000000000000000000000000000000000babe01`
+/// - `0xBABE0002` → `0x0000000000000000000000000000000000babe02`
 use alloy_primitives::Address;
 #[cfg(feature = "std")]
 use std::vec::Vec;
 
+/// LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1 : 0x0000000000000000000000000000000000babe01
 pub const LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1: Address = Address::new([
-    0x72, 0x7e, 0x36, 0x5e, 0x80, 0xe0, 0x77, 0x0b, 0x13, 0x28, 0xff, 0x6e, 0xc9, 0xd5, 0x68, 0x5b,
-    0xf6, 0x1d, 0x5b, 0x74,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0xba, 0xbe, 0x01,
 ]);
 
+/// LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2: 0x0000000000000000000000000000000000babe02
 pub const LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2: Address = Address::new([
-    0x97, 0x6f, 0xfe, 0x04, 0xdd, 0xf4, 0x76, 0x1d, 0xf7, 0xeb, 0x00, 0x19, 0xa8, 0xed, 0xb6, 0xda,
-    0x0e, 0x19, 0x09, 0x65,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0xba, 0xbe, 0x02,
 ]);
 
 pub const LOAD_0XBABE_CALLDATA_TOKEN_COST: u64 = 2;
