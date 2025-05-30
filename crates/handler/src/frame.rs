@@ -338,6 +338,13 @@ where
             }
         };
 
+        // LOAD_NETWORK:0xBABE protocol
+        // these addresses are reserved for 0xbabe transactions
+        // which has special fee pricing on calldata
+        if primitives::load_0xbabe::is_reserved_address(created_address) {
+            return return_error(InstructionResult::Return);
+        }
+
         // warm load account.
         context.journal().load_account(created_address)?;
 
@@ -457,6 +464,13 @@ where
         let old_nonce = nonce - 1;
 
         let created_address = created_address.unwrap_or_else(|| inputs.caller.create(old_nonce));
+
+        // LOAD_NETWORK:0xBABE
+        // these addresses are reserved for 0xbabe transactions
+        // which has special fee pricing on calldata
+        if primitives::load_0xbabe::is_reserved_address(created_address) {
+            return return_error(InstructionResult::Return);
+        }
 
         // Load account so it needs to be marked as warm for access list.
         context.journal().load_account(created_address)?;
@@ -846,4 +860,166 @@ pub fn return_eofcreate<JOURNAL: JournalTr>(
 
     // Eof bytecode is going to be hashed.
     journal.set_code(address, Bytecode::Eof(Arc::new(bytecode)));
+}
+
+/// LOAD_NETWORK:0xBABE tests for 0xBabe reserved addresses
+/// To make sure that even if the address is bruteforced you
+/// can not create a contract on it
+#[cfg(test)]
+mod tests {
+    use crate::{EvmTr, ExecuteCommitEvm, MainBuilder, MainContext};
+    use context::Context;
+    use context_interface::result::{ExecutionResult, Output};
+    use database::CacheDB;
+    use database_interface::EmptyDB;
+
+    use primitives::{address, TxKind};
+
+    #[test]
+    fn test_create_at_known_reserved_address() {
+        use primitives::load_0xbabe::test_helpers::with_test_reserved_addresses;
+        // Use a known address that we can easily generate
+        let caller = address!("1000000000000000000000000000000000000000");
+        let known_create_address = caller.create(0); // Address from caller with nonce 0
+        println!("Testing with caller: {:?}", caller);
+        println!("Expected CREATE address: {:?}", known_create_address);
+
+        // Set this as a reserved address for testing
+        let _guard = with_test_reserved_addresses(vec![known_create_address]);
+
+        let ctx = Context::mainnet()
+            .modify_tx_chained(|tx| {
+                tx.kind = TxKind::Create;
+                tx.data = vec![0x60, 0x00, 0x60, 0x00, 0xf3].into(); // PUSH1 0 PUSH1 0 RETURN
+            })
+            .with_db(CacheDB::<EmptyDB>::default());
+        let mut evm = ctx.build_mainnet();
+        evm.tx.caller = caller;
+        evm.tx.gas_limit = 1000000;
+        evm.tx.nonce = 0;
+
+        let result = evm.replay_commit();
+
+        println!("Result of contract creation on reserved address: {result:#?}");
+        assert!(
+            matches!(
+                result,
+                Ok(ExecutionResult::Revert { .. })
+                    | Ok(ExecutionResult::Halt { .. })
+                    | Ok(ExecutionResult::Success {
+                        output: Output::Create(_, None),
+                        ..
+                    })
+                    | Err(_)
+            ),
+            "Expected failure or no contract at reserved address, got: {result:#?}"
+        );
+    }
+
+    #[test]
+    fn test_fee_for_0xbabe() {
+        // Known caller and deterministic contract address
+        let caller = address!("1000000000000000000000000000000000000000");
+        let normal_target = caller.create(1);
+
+        // Large calldata (128 KB, nonzero bytes for maximal gas cost)
+        let mut calldata = vec![0u8; 128 * 1024];
+        for i in 0..calldata.len() {
+            calldata[i] = (i % 256) as u8;
+        }
+
+        // Prepare EVM context
+        let ctx = Context::mainnet().with_db(CacheDB::<EmptyDB>::default());
+
+        // -- First tx: to normal address
+        let mut evm = ctx.build_mainnet();
+        evm.tx.kind = TxKind::Call(normal_target);
+        evm.tx.data = calldata.clone().into();
+        evm.tx.caller = caller;
+        evm.tx.gas_limit = 100_000_000_000;
+        evm.tx.nonce = 0;
+
+        let result_normal = evm.replay_commit();
+        let normal_gas = match result_normal {
+            Ok(ExecutionResult::Success { gas_used, .. }) => gas_used,
+            _ => panic!("Unexpected result for normal address: {result_normal:?}"),
+        };
+
+        println!("Gas used for 128KB normal call: {normal_gas}");
+
+        // -- Second tx: to 0xBABE special address
+        evm.tx.kind =
+            TxKind::Call(primitives::load_0xbabe::LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1);
+        evm.tx.data = calldata.into(); // reuse same calldata
+        evm.tx.caller = caller;
+        evm.tx.gas_limit = 100_000_000_000;
+        evm.tx.nonce = 1;
+
+        let result_babe = evm.replay_commit();
+        let babe_gas = match result_babe {
+            Ok(ExecutionResult::Success { gas_used, .. }) => gas_used,
+            _ => panic!("Unexpected result for 0xBABE address: {result_babe:?}"),
+        };
+
+        println!("Gas used for 128KB 0xBABE call: {babe_gas}");
+
+        // -- Check that 0xBABE call is strictly cheaper
+        assert!(
+            babe_gas < normal_gas,
+            "Expected 0xBABE call to use less gas ({} vs {})",
+            babe_gas,
+            normal_gas
+        );
+    }
+
+    #[test]
+    fn test_normal_creates_work() {
+        let normal_caller = address!("2000000000000000000000000000000000000000");
+
+        let ctx = Context::mainnet()
+            .modify_tx_chained(|tx| {
+                tx.kind = TxKind::Create;
+                tx.data = vec![0x60, 0x00, 0x60, 0x00, 0xf3].into(); // same minimal contract
+            })
+            .with_db(CacheDB::<EmptyDB>::default());
+        let mut evm = ctx.build_mainnet();
+        evm.tx.caller = normal_caller;
+        evm.tx.gas_limit = 1000000;
+        evm.tx.nonce = 0;
+
+        let result = evm.replay_commit();
+
+        println!("Result of normal contract creation: {result:#?}");
+        // Assert creation **succeeds**
+        assert!(
+            matches!(
+                result,
+                Ok(ExecutionResult::Success {
+                    output: Output::Create(_, Some(_)),
+                    ..
+                })
+            ),
+            "Expected contract creation to succeed at normal address, got: {result:#?}"
+        );
+    }
+
+    #[test]
+    fn test_reserved_addresses_basic() {
+        use primitives::load_0xbabe::{
+            is_reserved_address, LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1,
+            LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2,
+        };
+
+        // Should always pass
+        assert!(is_reserved_address(
+            LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE1
+        ));
+        assert!(is_reserved_address(
+            LOAD_NETWORK_0XBABE_SPECIAL_ADDRESS_0XBABE2
+        ));
+
+        // Random address should not be reserved
+        let random = address!("0000000000000000000000000000000000000001");
+        assert!(!is_reserved_address(random));
+    }
 }

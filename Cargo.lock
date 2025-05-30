@@ -3522,6 +3522,7 @@ dependencies = [
  "alloy-provider",
  "alloy-signer",
  "alloy-signer-local",
+ "anyhow",
  "auto_impl",
  "revm-bytecode",
  "revm-context",
